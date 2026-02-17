@@ -153,8 +153,8 @@ jobs:
               range="${prev:+$prev..}$curr"
           
               echo -e "## $curr\n" >> "$temp"
-              git log --no-merges --pretty=format:"%B" "$range" | \
-              awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$temp"
+              git log --no-merges --pretty=format:"%s" "$range" | \
+              awk '!/Update changelog/ && !/Co-authored-by:/ && !/cursoragent@cursor.com/ && NF {print "- " $0 "\n"}' >> "$temp"
           done
           [ -f CHANGELOG.md ] && cat CHANGELOG.md >> "$temp"
           
@@ -209,7 +209,7 @@ jobs:
       - name: Generate release.md
         run: |
           tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/chen08209/FlClash/releases/latest" | \
+          preTag=$(curl -s "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | \
           sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
           
           [ -z "$preTag" ] && preTag=""
@@ -223,8 +223,8 @@ jobs:
             prev="${tags[i+1]}"
             range="${prev:+$prev..}$curr"
           
-            git log --no-merges --pretty=format:"%B" "$range" | \
-            awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
+            git log --no-merges --pretty=format:"%s" "$range" | \
+            awk '!/Update changelog/ && !/Co-authored-by:/ && !/cursoragent@cursor.com/ && NF {print "- " $0 "\n"}' >> "$out"
           done
       # - name: Push to telegram
       #   continue-on-error: true
