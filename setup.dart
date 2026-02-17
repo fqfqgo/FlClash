@@ -154,13 +154,10 @@ class Build {
       workingDirectory: workingDirectory,
       runInShell: runInShell,
     );
-    process.stdout.listen((data) {
-      print(utf8.decode(data));
-    });
-    process.stderr.listen((data) {
-      print(utf8.decode(data));
-    });
+    final stdoutFuture = process.stdout.transform(utf8.decoder).forEach(print);
+    final stderrFuture = process.stderr.transform(utf8.decoder).forEach(print);
     final exitCode = await process.exitCode;
+    await Future.wait([stdoutFuture, stderrFuture]);
     if (exitCode != 0 && name != null) {
       throw '$name error (exit code: $exitCode)';
     }
@@ -542,5 +539,11 @@ Future<void> main(Iterable<String> args) async {
   runner.addCommand(BuildCommand(target: Target.linux));
   runner.addCommand(BuildCommand(target: Target.windows));
   runner.addCommand(BuildCommand(target: Target.macos));
-  await runner.run(args);
+  try {
+    await runner.run(args);
+  } catch (e, st) {
+    stderr.writeln('setup.dart failed: $e');
+    stderr.writeln(st);
+    exitCode = 1;
+  }
 }
