@@ -415,7 +415,9 @@ class BuildCommand extends Command {
   }
 
   Future<void> _getMacosDependencies() async {
-    await Build.exec(Build.getExecutable('npm install -g appdmg'));
+    await Build.exec(
+      Build.getExecutable('npm install -g appdmg || true'),
+    );
   }
 
   Future<void> _buildDistributor({
@@ -516,7 +518,7 @@ class BuildCommand extends Command {
           target: target,
           targets: 'apk',
           args:
-              ",split-per-abi --build-target-platform ${defaultTargets.join(",")}",
+              " --description android,split-per-abi --build-target-platform ${defaultTargets.join(",")}",
           env: env,
         );
         return;
@@ -544,6 +546,6 @@ Future<void> main(Iterable<String> args) async {
   } catch (e, st) {
     stderr.writeln('setup.dart failed: $e');
     stderr.writeln(st);
-    exitCode = 1;
+    exit(1);
   }
 }

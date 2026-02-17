@@ -97,6 +97,10 @@ jobs:
           flutter --version
           flutter pub get
 
+      - name: Install appdmg (macOS)
+        if: startsWith(matrix.platform,'macos')
+        run: npm install -g appdmg
+
       - name: Setup
         env:
           ANDROID_NDK: ${{ env.ANDROID_NDK_LATEST_HOME }}
@@ -108,6 +112,7 @@ jobs:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
+          if-no-files-found: ignore
 
   changelog:
     runs-on: ubuntu-latest
