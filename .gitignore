@@ -57,6 +57,7 @@ CLAUDE.md
 /android/core/**/includes/
 /android/core/**/cmake-build-*/
 /android/core/**/jniLibs/
+/android/app/google-services.json
 
 #FlClash
 /libclash/
