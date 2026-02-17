@@ -227,6 +227,7 @@ jobs:
             awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
           done
       - name: Push to telegram
+        continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TAG: ${{ github.ref_name }}

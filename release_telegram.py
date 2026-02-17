@@ -1,15 +1,17 @@
 import os
 import json
 import requests
+from requests.exceptions import RequestException
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TAG = os.getenv("TAG")
-RUN_ID = os.getenv("RUN_ID")
+TAG = os.getenv("TAG", "")
+RUN_ID = os.getenv("RUN_ID", "")
 
 IS_STABLE = "-" not in TAG
 
 CHAT_ID = "@FlClash"
-API_URL = f"http://localhost:8081/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup"
+LOCAL_API_URL = f"http://localhost:8081/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup"
+PUBLIC_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMediaGroup"
 
 DIST_DIR = os.path.join(os.getcwd(), "dist")
 release = os.path.join(os.getcwd(), "release.md")
@@ -59,13 +61,40 @@ if media:
     media[-1]["caption"] = text
     media[-1]["parse_mode"] = "Markdown"
 
-response = requests.post(
-    API_URL,
-    data={
-        "chat_id": CHAT_ID,
-        "media": json.dumps(media)
-    },
-    files=files
-)
+if not TELEGRAM_BOT_TOKEN:
+    print("TELEGRAM_BOT_TOKEN is missing, skip telegram push.")
+    raise SystemExit(0)
 
-print("Response JSON:", response.json())
+response = None
+errors = []
+for api_url in [LOCAL_API_URL, PUBLIC_API_URL]:
+    try:
+        response = requests.post(
+            api_url,
+            data={
+                "chat_id": CHAT_ID,
+                "media": json.dumps(media)
+            },
+            files=files,
+            timeout=30
+        )
+        response.raise_for_status()
+        print(f"Telegram push succeeded via: {api_url}")
+        print("Response JSON:", response.json())
+        break
+    except RequestException as e:
+        errors.append(f"{api_url} -> {e}")
+        print(f"Telegram push failed via: {api_url}, error: {e}")
+
+for f in files.values():
+    try:
+        f.close()
+    except Exception:
+        pass
+
+if response is None:
+    print("Telegram push failed on all endpoints:")
+    for err in errors:
+        print(err)
+    # Do not block release flow on telegram transient failure.
+    raise SystemExit(0)
