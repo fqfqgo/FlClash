@@ -140,8 +140,9 @@ class $ProfilesTable extends Profiles
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _loginPasswordMeta =
-      const VerificationMeta('loginPassword');
+  static const VerificationMeta _loginPasswordMeta = const VerificationMeta(
+    'loginPassword',
+  );
   @override
   late final GeneratedColumn<String> loginPassword = GeneratedColumn<String>(
     'login_password',
@@ -245,6 +246,15 @@ class $ProfilesTable extends Profiles
       context.handle(
         _orderMeta,
         order.isAcceptableOrUnknown(data['order']!, _orderMeta),
+      );
+    }
+    if (data.containsKey('login_password')) {
+      context.handle(
+        _loginPasswordMeta,
+        loginPassword.isAcceptableOrUnknown(
+          data['login_password']!,
+          _loginPasswordMeta,
+        ),
       );
     }
     return context;
@@ -543,7 +553,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     selectedMap: selectedMap ?? this.selectedMap,
     unfoldSet: unfoldSet ?? this.unfoldSet,
     order: order.present ? order.value : this.order,
-    loginPassword: loginPassword.present ? loginPassword.value : this.loginPassword,
+    loginPassword: loginPassword.present
+        ? loginPassword.value
+        : this.loginPassword,
   );
   RawProfile copyWithCompanion(ProfilesCompanion data) {
     return RawProfile(
@@ -574,7 +586,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           : this.selectedMap,
       unfoldSet: data.unfoldSet.present ? data.unfoldSet.value : this.unfoldSet,
       order: data.order.present ? data.order.value : this.order,
-      loginPassword: data.loginPassword.present ? data.loginPassword.value : this.loginPassword,
+      loginPassword: data.loginPassword.present
+          ? data.loginPassword.value
+          : this.loginPassword,
     );
   }
 
@@ -593,7 +607,8 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('loginPassword: $loginPassword')
           ..write(')'))
         .toString();
   }
@@ -831,7 +846,8 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
-          ..write('order: $order')
+          ..write('order: $order, ')
+          ..write('loginPassword: $loginPassword')
           ..write(')'))
         .toString();
   }
@@ -1697,6 +1713,7 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       required Map<String, String> selectedMap,
       required Set<String> unfoldSet,
       Value<int?> order,
+      Value<String?> loginPassword,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
     ProfilesCompanion Function({
@@ -1713,6 +1730,7 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<Map<String, String>> selectedMap,
       Value<Set<String>> unfoldSet,
       Value<int?> order,
+      Value<String?> loginPassword,
     });
 
 final class $$ProfilesTableReferences
@@ -1825,6 +1843,11 @@ class $$ProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get loginPassword => $composableBuilder(
+    column: $table.loginPassword,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> profileRuleLinksRefs(
     Expression<bool> Function($$ProfileRuleLinksTableFilterComposer f) f,
   ) {
@@ -1924,6 +1947,11 @@ class $$ProfilesTableOrderingComposer
     column: $table.order,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get loginPassword => $composableBuilder(
+    column: $table.loginPassword,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -1990,6 +2018,11 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<int> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
+
+  GeneratedColumn<String> get loginPassword => $composableBuilder(
+    column: $table.loginPassword,
+    builder: (column) => column,
+  );
 
   Expression<T> profileRuleLinksRefs<T extends Object>(
     Expression<T> Function($$ProfileRuleLinksTableAnnotationComposer a) f,
@@ -2059,6 +2092,7 @@ class $$ProfilesTableTableManager
                 Value<Map<String, String>> selectedMap = const Value.absent(),
                 Value<Set<String>> unfoldSet = const Value.absent(),
                 Value<int?> order = const Value.absent(),
+                Value<String?> loginPassword = const Value.absent(),
               }) => ProfilesCompanion(
                 id: id,
                 label: label,
@@ -2073,6 +2107,7 @@ class $$ProfilesTableTableManager
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
                 order: order,
+                loginPassword: loginPassword,
               ),
           createCompanionCallback:
               ({
@@ -2090,6 +2125,7 @@ class $$ProfilesTableTableManager
                 required Map<String, String> selectedMap,
                 required Set<String> unfoldSet,
                 Value<int?> order = const Value.absent(),
+                Value<String?> loginPassword = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 id: id,
                 label: label,
@@ -2104,6 +2140,7 @@ class $$ProfilesTableTableManager
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
                 order: order,
+                loginPassword: loginPassword,
               ),
           withReferenceMapper: (p0) => p0
               .map(
