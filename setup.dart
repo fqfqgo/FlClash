@@ -193,14 +193,17 @@ class Build {
     final targetOutFile = File(targetOutFilePath);
     if (await targetOutFile.exists()) {
       await targetOutFile.delete(recursive: true);
-      await Directory(targetOutFilePath).create(recursive: true);
     }
+    await Directory(targetOutFilePath).create(recursive: true);
     for (final item in items) {
-      final outFilePath = join(targetOutFilePath, item.archName);
+      final outFilePath = item.archName == null
+          ? targetOutFilePath
+          : join(targetOutFilePath, item.archName);
       final file = File(outFilePath);
       if (file.existsSync()) {
         file.deleteSync(recursive: true);
       }
+      await Directory(outFilePath).create(recursive: true);
 
       final fileName = isLib
           ? '$libName${item.target.dynamicLibExtensionName}'
@@ -415,7 +418,7 @@ class BuildCommand extends Command {
   }
 
   Future<void> _getMacosDependencies() async {
-    await Build.exec(Build.getExecutable('npm install -g appdmg || true'));
+    await Build.exec(Build.getExecutable('npm install -g appdmg'));
   }
 
   Future<void> _buildDistributor({
