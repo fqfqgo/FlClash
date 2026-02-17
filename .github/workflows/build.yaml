@@ -106,6 +106,14 @@ jobs:
         if: startsWith(matrix.platform,'macos')
         run: npm install -g appdmg
 
+      - name: Ensure macOS Flutter ephemeral config
+        if: startsWith(matrix.platform,'macos')
+        run: |
+          mkdir -p macos/Flutter/ephemeral
+          echo "FLUTTER_ROOT=${{ steps.flutter_root.outputs.root }}" > macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+          echo "FLUTTER_TARGET=lib/main.dart" >> macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+          echo "FLUTTER_BUILD_MODE=Release" >> macos/Flutter/ephemeral/Flutter-Generated.xcconfig
+
       - name: Setup
         env:
           ANDROID_NDK: ${{ env.ANDROID_NDK_LATEST_HOME }}
