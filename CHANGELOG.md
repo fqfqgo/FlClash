@@ -1,3 +1,13 @@
+## v0.8.92.6
+
+- chore(ci): disable telegram push in release workflow
+
+- Co-authored-by: Cursor <cursoragent@cursor.com>
+
+- fix(ci): make telegram push resilient and non-blocking
+
+- Co-authored-by: Cursor <cursoragent@cursor.com>
+
 ## v0.8.92.5
 
 - chore(android): switch applicationId and stop tracking google-services.json
