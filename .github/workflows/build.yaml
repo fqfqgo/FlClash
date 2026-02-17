@@ -50,12 +50,44 @@ jobs:
 
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+          SERVICE_JSON_RAW: ${{ secrets.SERVICE_JSON }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
-          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
+          set -euo pipefail
+
+          if [ -z "${SERVICE_JSON_RAW:-}" ]; then
+            echo "SERVICE_JSON secret is missing." >&2
+            exit 1
+          fi
+
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "$KEYSTORE_B64" | base64 --decode > android/app/keystore.jks
+          fi
+
+          # Accept both base64-encoded and plain JSON secret content.
+          if echo "$SERVICE_JSON_RAW" | base64 --decode > android/app/google-services.json 2>/dev/null; then
+            echo "google-services.json decoded from base64."
+          else
+            printf '%s' "$SERVICE_JSON_RAW" > android/app/google-services.json
+            echo "google-services.json written from raw JSON."
+          fi
+
+          # Fail fast with a clear message if JSON is invalid.
+          python -m json.tool android/app/google-services.json >/dev/null
+
+          if [ -n "${KEY_ALIAS:-}" ]; then
+            echo "keyAlias=$KEY_ALIAS" >> android/local.properties
+          fi
+          if [ -n "${STORE_PASSWORD:-}" ]; then
+            echo "storePassword=$STORE_PASSWORD" >> android/local.properties
+          fi
+          if [ -n "${KEY_PASSWORD:-}" ]; then
+            echo "keyPassword=$KEY_PASSWORD" >> android/local.properties
+          fi
 
       - name: Setup Go
         uses: actions/setup-go@v5
