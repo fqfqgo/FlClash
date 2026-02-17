@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:fl_clash/common/common.dart';
+import 'package:fl_clash/enum/enum.dart';
 
 /// HTTP response header for subscription encryption (same as v2rayN)
 const String subscriptionEncryptionHeader = 'subscription-encryption';
