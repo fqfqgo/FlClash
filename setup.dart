@@ -110,10 +110,15 @@ class Build {
   static String _getCc(BuildItem buildItem) {
     final environment = Platform.environment;
     if (buildItem.target == Target.android) {
-      final ndk = environment['ANDROID_NDK'];
-      assert(ndk != null);
+      final ndk =
+          environment['ANDROID_NDK'] ??
+          environment['ANDROID_NDK_HOME'] ??
+          environment['ANDROID_NDK_LATEST_HOME'];
+      if (ndk == null || ndk.isEmpty) {
+        throw 'ANDROID_NDK not found in environment';
+      }
       final prebuiltDir = Directory(
-        join(ndk!, 'toolchains', 'llvm', 'prebuilt'),
+        join(ndk, 'toolchains', 'llvm', 'prebuilt'),
       );
       final prebuiltDirList = prebuiltDir
           .listSync()
@@ -156,7 +161,9 @@ class Build {
       print(utf8.decode(data));
     });
     final exitCode = await process.exitCode;
-    if (exitCode != 0 && name != null) throw '$name error';
+    if (exitCode != 0 && name != null) {
+      throw '$name error (exit code: $exitCode)';
+    }
   }
 
   static Future<String> calcSha256(String filePath) async {
@@ -408,7 +415,7 @@ class BuildCommand extends Command {
   }
 
   Future<void> _getMacosDependencies() async {
-    await Build.exec(Build.getExecutable('npm install -g appdmg'));
+    await Build.exec(Build.getExecutable('npm install -g appdmg || true'));
   }
 
   Future<void> _buildDistributor({
@@ -470,7 +477,7 @@ class BuildCommand extends Command {
 
     switch (target) {
       case Target.windows:
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: 'exe,zip',
           args: ' --description $archName',
@@ -486,7 +493,7 @@ class BuildCommand extends Command {
         ].join(',');
         final defaultTarget = targetMap[arch];
         await _getLinuxDependencies(arch!);
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: targets,
           args:
@@ -505,7 +512,7 @@ class BuildCommand extends Command {
             .where((element) => arch == null ? true : element == arch)
             .map((e) => targetMap[e])
             .toList();
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: 'apk',
           args:
@@ -515,7 +522,7 @@ class BuildCommand extends Command {
         return;
       case Target.macos:
         await _getMacosDependencies();
-        _buildDistributor(
+        await _buildDistributor(
           target: target,
           targets: 'dmg',
           args: ' --description $archName',
@@ -532,5 +539,5 @@ Future<void> main(Iterable<String> args) async {
   runner.addCommand(BuildCommand(target: Target.linux));
   runner.addCommand(BuildCommand(target: Target.windows));
   runner.addCommand(BuildCommand(target: Target.macos));
-  runner.run(args);
+  await runner.run(args);
 }

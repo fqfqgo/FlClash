@@ -98,6 +98,8 @@ jobs:
           flutter pub get
 
       - name: Setup
+        env:
+          ANDROID_NDK: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
       - name: Upload
