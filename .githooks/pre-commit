@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+SCRIPT_PATH="$ROOT_DIR/scripts/precheck.ps1"
+
+if [ ! -f "$SCRIPT_PATH" ]; then
+  echo "pre-commit: missing script: $SCRIPT_PATH" >&2
+  exit 1
+fi
+
+if command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT_PATH"
+elif command -v pwsh >/dev/null 2>&1; then
+  pwsh -NoProfile -File "$SCRIPT_PATH"
+else
+  echo "pre-commit: PowerShell not found (powershell.exe/pwsh)." >&2
+  exit 1
+fi
