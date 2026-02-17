@@ -2,19 +2,15 @@ name: build
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*'
-  workflow_dispatch:
 env:
-  IS_STABLE: ${{ startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-') }}
+  IS_STABLE: ${{ !contains(github.ref, '-') }}
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.allow_failure || false }}
     strategy:
-      fail-fast: false
       matrix:
         include:
           - platform: android
@@ -37,7 +33,6 @@ jobs:
           - platform: linux
             os: ubuntu-24.04-arm
             arch: arm64
-            allow_failure: true
 
     steps:
       - name: Setup rust
@@ -55,20 +50,12 @@ jobs:
 
       - name: Setup Android Signing
         if: startsWith(matrix.platform,'android')
-        env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE }}
-          SERVICE_JSON_B64: ${{ secrets.SERVICE_JSON }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 --decode > android/app/keystore.jks
-            echo "$SERVICE_JSON_B64" | base64 --decode > android/app/google-services.json
-            echo "keyAlias=$KEY_ALIAS" >> android/local.properties
-            echo "storePassword=$STORE_PASSWORD" >> android/local.properties
-            echo "keyPassword=$KEY_PASSWORD" >> android/local.properties
-          fi
+          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -97,13 +84,7 @@ jobs:
           flutter --version
           flutter pub get
 
-      - name: Install appdmg (macOS)
-        if: startsWith(matrix.platform,'macos')
-        run: npm install -g appdmg
-
       - name: Setup
-        env:
-          ANDROID_NDK: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
       - name: Upload
@@ -112,7 +93,6 @@ jobs:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
           overwrite: true
-          if-no-files-found: ignore
 
   changelog:
     runs-on: ubuntu-latest
@@ -215,7 +195,6 @@ jobs:
             awk '!/Update changelog/ && NF {print "- " $0 "\n"}' >> "$out"
           done
       - name: Push to telegram
-        continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TAG: ${{ github.ref_name }}
