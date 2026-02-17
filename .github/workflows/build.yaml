@@ -97,27 +97,13 @@ jobs:
           flutter --version
           flutter pub get
 
-      - name: Set FLUTTER_ROOT (macOS/Linux)
-        if: runner.os != 'Windows'
-        id: flutter_root
-        run: echo "root=$(dirname $(dirname $(command -v flutter)))" >> $GITHUB_OUTPUT
-
       - name: Install appdmg (macOS)
         if: startsWith(matrix.platform,'macos')
         run: npm install -g appdmg
 
-      - name: Ensure macOS Flutter ephemeral config
-        if: startsWith(matrix.platform,'macos')
-        run: |
-          mkdir -p macos/Flutter/ephemeral
-          echo "FLUTTER_ROOT=${{ steps.flutter_root.outputs.root }}" > macos/Flutter/ephemeral/Flutter-Generated.xcconfig
-          echo "FLUTTER_TARGET=lib/main.dart" >> macos/Flutter/ephemeral/Flutter-Generated.xcconfig
-          echo "FLUTTER_BUILD_MODE=Release" >> macos/Flutter/ephemeral/Flutter-Generated.xcconfig
-
       - name: Setup
         env:
           ANDROID_NDK: ${{ env.ANDROID_NDK_LATEST_HOME }}
-          FLUTTER_ROOT: ${{ steps.flutter_root.outputs.root }}
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
       - name: Upload
