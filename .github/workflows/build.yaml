@@ -51,13 +51,21 @@ jobs:
           submodules: recursive
 
       - name: Setup Android Signing
-        if: startsWith(matrix.platform,'android') && secrets.KEYSTORE != ''
+        if: startsWith(matrix.platform,'android')
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+          SERVICE_JSON_B64: ${{ secrets.SERVICE_JSON }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.KEYSTORE }}" | base64 --decode > android/app/keystore.jks
-          echo "${{ secrets.SERVICE_JSON }}" | base64 --decode > android/app/google-services.json
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/local.properties
-          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> android/local.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/local.properties
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 --decode > android/app/keystore.jks
+            echo "$SERVICE_JSON_B64" | base64 --decode > android/app/google-services.json
+            echo "keyAlias=$KEY_ALIAS" >> android/local.properties
+            echo "storePassword=$STORE_PASSWORD" >> android/local.properties
+            echo "keyPassword=$KEY_PASSWORD" >> android/local.properties
+          fi
 
       - name: Setup Go
         uses: actions/setup-go@v5
