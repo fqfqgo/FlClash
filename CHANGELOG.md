@@ -1,3 +1,11 @@
+## v0.8.92.7
+
+- feat(dashboard): add launch-browser button beside start button
+
+- fix(release): use commit subjects and filter co-author trailers
+
+- chore(ci): disable fdroid push step
+
 ## v0.8.92.6
 
 - chore(ci): disable telegram push in release workflow
