@@ -1,3 +1,7 @@
+## v0.8.92.10
+
+- fix(ci): stabilize android artifacts and release notes
+
 ## v0.8.92.9
 
 - fix(ci): collect android apk into dist fallback
