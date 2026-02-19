@@ -119,6 +119,26 @@ jobs:
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
+      - name: Ensure Android split APK artifacts
+        if: startsWith(matrix.platform, 'android')
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+
+          if ls dist/*android-arm64-v8a.apk dist/*android-armeabi-v7a.apk dist/*android-x86_64.apk >/dev/null 2>&1; then
+            echo "Split APK artifacts already exist in dist."
+            exit 0
+          fi
+
+          echo "Split APK artifacts missing. Build split-per-abi APKs as fallback."
+          flutter build apk --release --split-per-abi --dart-define-from-file=env.json
+
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "dist/FlClash-${version}-android-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "dist/FlClash-${version}-android-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "dist/FlClash-${version}-android-x86_64.apk"
+
       - name: Fallback collect Android artifacts
         if: startsWith(matrix.platform, 'android')
         shell: pwsh
@@ -261,24 +281,37 @@ jobs:
       - name: Generate release.md
         run: |
           currentTag="${{ github.ref_name }}"
-          preTag=$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | \
-            sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p' || true)
-
+          preTag=$(git tag --merged "$currentTag" --sort=-v:refname | sed -n '2p')
           out="release.md"
           : > "$out"
 
-          if [ -n "$preTag" ] && git rev-parse -q --verify "$preTag^{tag}" >/dev/null; then
+          range="$currentTag"
+          if [ -n "$preTag" ]; then
             range="$preTag..$currentTag"
-          else
-            range="$currentTag"
           fi
 
-          git log --no-merges --pretty=format:"%s" "$range" | \
+          git log --first-parent --no-merges --pretty=format:"%s" "$range" | \
             awk '!/Update changelog/ && !/Co-authored-by:/ && !/cursoragent@cursor.com/ && NF {print "- " $0}' >> "$out"
 
           if [ ! -s "$out" ]; then
             echo "- Maintenance release." >> "$out"
           fi
+
+      - name: Normalize artifact filenames by tag version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          shopt -s nullglob
+          for file in ./dist/FlClash-*; do
+            base="$(basename "$file")"
+            normalized="$(echo "$base" | sed -E "s/^FlClash-[0-9]+(\.[0-9]+){1,3}/FlClash-${version}/")"
+            if [ "$base" != "$normalized" ]; then
+              rm -f "./dist/${normalized}"
+              mv "$file" "./dist/${normalized}"
+              echo "Renamed ${base} -> ${normalized}"
+            fi
+          done
       # - name: Push to telegram
       #   continue-on-error: true
       #   env:
