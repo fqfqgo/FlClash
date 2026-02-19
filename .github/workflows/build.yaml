@@ -119,11 +119,30 @@ jobs:
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
+      - name: Verify dist artifacts
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: $pwd"
+          if (!(Test-Path "./dist")) {
+            Write-Error "dist directory not found after setup.dart build."
+            exit 1
+          }
+
+          $files = Get-ChildItem "./dist" -Recurse -File
+          if ($files.Count -eq 0) {
+            Write-Error "dist directory exists but contains no files."
+            exit 1
+          }
+
+          Write-Host "dist file count: $($files.Count)"
+          $files | Select-Object -First 200 | ForEach-Object { Write-Host $_.FullName }
+
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: artifact-${{ matrix.platform }}${{ matrix.arch && format('-{0}', matrix.arch) }}
           path: ./dist
+          if-no-files-found: error
           overwrite: true
 
   changelog:
@@ -208,24 +227,25 @@ jobs:
 
       - name: Generate release.md
         run: |
-          tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | \
-          sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p')
-          
-          [ -z "$preTag" ] && preTag=""
-          
-          out="release.md" > "$out"
-          
-          for i in "${!tags[@]}"; do
-            curr="${tags[i]}"
-            [[ "$curr" == "$preTag" ]] && break
-          
-            prev="${tags[i+1]}"
-            range="${prev:+$prev..}$curr"
-          
-            git log --no-merges --pretty=format:"%s" "$range" | \
-            awk '!/Update changelog/ && !/Co-authored-by:/ && !/cursoragent@cursor.com/ && NF {print "- " $0 "\n"}' >> "$out"
-          done
+          currentTag="${{ github.ref_name }}"
+          preTag=$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" | \
+            sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p' || true)
+
+          out="release.md"
+          : > "$out"
+
+          if [ -n "$preTag" ] && git rev-parse -q --verify "$preTag^{tag}" >/dev/null; then
+            range="$preTag..$currentTag"
+          else
+            range="$currentTag"
+          fi
+
+          git log --no-merges --pretty=format:"%s" "$range" | \
+            awk '!/Update changelog/ && !/Co-authored-by:/ && !/cursoragent@cursor.com/ && NF {print "- " $0}' >> "$out"
+
+          if [ ! -s "$out" ]; then
+            echo "- Maintenance release." >> "$out"
+          fi
       # - name: Push to telegram
       #   continue-on-error: true
       #   env:
@@ -240,7 +260,7 @@ jobs:
       - name: Patch release.md
         run: |
           version=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          sed "s|VERSION|$version|g" ./.github/release_template.md >> release.md
+          sed -e "s|VERSION|$version|g" -e "s|REPO|${GITHUB_REPOSITORY}|g" ./.github/release_template.md >> release.md
 
       - name: Generate sha256
         if: env.IS_STABLE == 'true'

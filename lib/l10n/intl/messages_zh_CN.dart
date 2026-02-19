@@ -520,9 +520,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "status": MessageLookupByLibrary.simpleMessage("状态"),
     "statusDesc": MessageLookupByLibrary.simpleMessage("关闭后将使用系统DNS"),
     "stop": MessageLookupByLibrary.simpleMessage("暂停"),
+    "launchBrowser": MessageLookupByLibrary.simpleMessage("启动浏览器"),
+    "launchBrowserFailed": MessageLookupByLibrary.simpleMessage("启动浏览器失败"),
     "stopVpn": MessageLookupByLibrary.simpleMessage("正在停止VPN..."),
     "style": MessageLookupByLibrary.simpleMessage("风格"),
     "subRule": MessageLookupByLibrary.simpleMessage("子规则"),
+    "subscriptionLoginPassword": MessageLookupByLibrary.simpleMessage(
+      "网站登录密码",
+    ),
+    "subscriptionLoginPasswordHint": MessageLookupByLibrary.simpleMessage(
+      "仅加密订阅需要",
+    ),
     "submit": MessageLookupByLibrary.simpleMessage("提交"),
     "sync": MessageLookupByLibrary.simpleMessage("同步"),
     "system": MessageLookupByLibrary.simpleMessage("系统"),

@@ -119,6 +119,7 @@ class _InputDialogState extends State<InputDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _textController;
+  late bool _obscureText;
 
   String get value => widget.value;
 
@@ -130,6 +131,7 @@ class _InputDialogState extends State<InputDialog> {
   void initState() {
     super.initState();
     _textController = TextEditingController(text: value);
+    _obscureText = widget.obscureText ?? false;
   }
 
   Future<void> _handleUpdate() async {
@@ -153,6 +155,7 @@ class _InputDialogState extends State<InputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isPasswordField = widget.obscureText == true;
     return CommonDialog(
       title: title,
       actions: [
@@ -176,9 +179,9 @@ class _InputDialogState extends State<InputDialog> {
           runSpacing: 16,
           children: [
             TextFormField(
-              obscureText: widget.obscureText ?? false,
+              obscureText: isPasswordField ? _obscureText : false,
               keyboardType: TextInputType.url,
-              maxLines: widget.obscureText == true ? 1 : 5,
+              maxLines: isPasswordField ? 1 : 5,
               minLines: 1,
               controller: _textController,
               onFieldSubmitted: (_) {
@@ -187,6 +190,20 @@ class _InputDialogState extends State<InputDialog> {
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 suffixText: suffixText,
+                suffixIcon: isPasswordField
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _obscureText = !_obscureText;
+                          });
+                        },
+                        icon: Icon(
+                          _obscureText
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                      )
+                    : null,
                 hintText: widget.hintText,
                 labelText: widget.labelText,
               ),

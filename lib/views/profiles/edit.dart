@@ -32,6 +32,7 @@ class _EditProfileViewState extends State<EditProfileView> {
   late final TextEditingController _loginPasswordController;
   late final TextEditingController _autoUpdateDurationController;
   late bool _autoUpdate;
+  bool _isLoginPasswordObscured = true;
   String? _rawText;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _fileInfoNotifier = ValueNotifier<FileInfo?>(null);
@@ -256,12 +257,24 @@ class _EditProfileViewState extends State<EditProfileView> {
         ListItem(
           title: TextFormField(
             textInputAction: TextInputAction.next,
-            obscureText: true,
+            obscureText: _isLoginPasswordObscured,
             controller: _loginPasswordController,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               labelText: appLocalizations.subscriptionLoginPassword,
               hintText: appLocalizations.subscriptionLoginPasswordHint,
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoginPasswordObscured = !_isLoginPasswordObscured;
+                  });
+                },
+                icon: Icon(
+                  _isLoginPasswordObscured
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                ),
+              ),
             ),
           ),
         ),

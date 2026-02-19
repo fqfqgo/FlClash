@@ -814,9 +814,19 @@ class MessageLookup extends MessageLookupByLibrary {
       "Системный DNS будет использоваться при выключении",
     ),
     "stop": MessageLookupByLibrary.simpleMessage("Стоп"),
+    "launchBrowser": MessageLookupByLibrary.simpleMessage("Запустить браузер"),
+    "launchBrowserFailed": MessageLookupByLibrary.simpleMessage(
+      "Не удалось запустить браузер",
+    ),
     "stopVpn": MessageLookupByLibrary.simpleMessage("Остановка VPN..."),
     "style": MessageLookupByLibrary.simpleMessage("Стиль"),
     "subRule": MessageLookupByLibrary.simpleMessage("Подправило"),
+    "subscriptionLoginPassword": MessageLookupByLibrary.simpleMessage(
+      "Пароль входа на сайт",
+    ),
+    "subscriptionLoginPasswordHint": MessageLookupByLibrary.simpleMessage(
+      "Только для зашифрованных подписок",
+    ),
     "submit": MessageLookupByLibrary.simpleMessage("Отправить"),
     "sync": MessageLookupByLibrary.simpleMessage("Синхронизация"),
     "system": MessageLookupByLibrary.simpleMessage("Система"),

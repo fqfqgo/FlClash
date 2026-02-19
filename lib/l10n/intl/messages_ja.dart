@@ -588,9 +588,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "status": MessageLookupByLibrary.simpleMessage("ステータス"),
     "statusDesc": MessageLookupByLibrary.simpleMessage("無効時はシステムDNSを使用"),
     "stop": MessageLookupByLibrary.simpleMessage("停止"),
+    "launchBrowser": MessageLookupByLibrary.simpleMessage("ブラウザを起動"),
+    "launchBrowserFailed": MessageLookupByLibrary.simpleMessage(
+      "ブラウザの起動に失敗しました",
+    ),
     "stopVpn": MessageLookupByLibrary.simpleMessage("VPNを停止中..."),
     "style": MessageLookupByLibrary.simpleMessage("スタイル"),
     "subRule": MessageLookupByLibrary.simpleMessage("サブルール"),
+    "subscriptionLoginPassword": MessageLookupByLibrary.simpleMessage(
+      "ウェブサイトログインパスワード",
+    ),
+    "subscriptionLoginPasswordHint": MessageLookupByLibrary.simpleMessage(
+      "暗号化された購読のみ",
+    ),
     "submit": MessageLookupByLibrary.simpleMessage("送信"),
     "sync": MessageLookupByLibrary.simpleMessage("同期"),
     "system": MessageLookupByLibrary.simpleMessage("システム"),

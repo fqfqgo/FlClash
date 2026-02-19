@@ -1779,6 +1779,26 @@ class AppLocalizations {
     return Intl.message('Stop', name: 'stop', desc: '', args: []);
   }
 
+  /// `Launch browser`
+  String get launchBrowser {
+    return Intl.message(
+      'Launch browser',
+      name: 'launchBrowser',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Launch browser failed`
+  String get launchBrowserFailed {
+    return Intl.message(
+      'Launch browser failed',
+      name: 'launchBrowserFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Processing app related settings`
   String get appDesc {
     return Intl.message(
