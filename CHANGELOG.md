@@ -1,3 +1,11 @@
+## v0.8.92.9
+
+- fix(ci): collect android apk into dist fallback
+
+## v0.8.92.8
+
+- feat(ui): improve subscription password UX and release notes
+
 ## v0.8.92.7
 
 - feat(dashboard): add launch-browser button beside start button
