@@ -73,3 +73,4 @@ devtools_options.yaml
 # Local debug artifacts
 /run_*_logs/
 /run_*_logs.zip
+env.json

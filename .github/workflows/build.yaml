@@ -119,6 +119,39 @@ jobs:
       - name: Setup
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
+      - name: Fallback collect Android artifacts
+        if: startsWith(matrix.platform, 'android')
+        shell: pwsh
+        run: |
+          $distPath = "./dist"
+          $distFiles = @()
+          if (Test-Path $distPath) {
+            $distFiles = Get-ChildItem $distPath -Recurse -File
+          }
+
+          if ($distFiles.Count -gt 0) {
+            Write-Host "dist already has files, skip fallback collection."
+            exit 0
+          }
+
+          $apkDir = "./build/app/outputs/flutter-apk"
+          if (!(Test-Path $apkDir)) {
+            Write-Host "No fallback apk directory found: $apkDir"
+            exit 0
+          }
+
+          $apkFiles = Get-ChildItem $apkDir -Filter "*.apk" -File
+          if ($apkFiles.Count -eq 0) {
+            Write-Host "No apk files found in fallback directory."
+            exit 0
+          }
+
+          New-Item -ItemType Directory -Force -Path $distPath | Out-Null
+          foreach ($apk in $apkFiles) {
+            Copy-Item $apk.FullName -Destination $distPath -Force
+            Write-Host "Copied fallback artifact: $($apk.FullName)"
+          }
+
       - name: Verify dist artifacts
         shell: pwsh
         run: |
