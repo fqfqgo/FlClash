@@ -377,8 +377,11 @@ class BuildCommand extends Command {
       .toList();
 
   Future<void> _buildEnvFile(String env, {String? coreSha256}) async {
+    final releaseVersion = Platform.environment['RELEASE_VERSION'];
     final data = {
       'APP_ENV': env,
+      if (releaseVersion != null && releaseVersion.isNotEmpty)
+        'APP_VERSION': releaseVersion,
       if (coreSha256 != null) 'CORE_SHA256': coreSha256,
     };
     final envFile = File(join(current, 'env.json'))..create();

@@ -282,7 +282,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteMultipTip": m1,
     "deleteTip": m2,
     "desc": MessageLookupByLibrary.simpleMessage(
-      "Многоплатформенный прокси-клиент на основе ClashMeta, простой и удобный в использовании, с открытым исходным кодом и без рекламы.",
+      "Многоплатформенный прокси-клиент, простой и удобный в использовании.",
     ),
     "destination": MessageLookupByLibrary.simpleMessage("Назначение"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage(

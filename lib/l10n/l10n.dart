@@ -959,10 +959,10 @@ class AppLocalizations {
     );
   }
 
-  /// `A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.`
+  /// `A multi-platform proxy client, simple and easy to use.`
   String get desc {
     return Intl.message(
-      'A multi-platform proxy client based on ClashMeta, simple and easy to use, open-source and ad-free.',
+      'A multi-platform proxy client, simple and easy to use.',
       name: 'desc',
       desc: '',
       args: [],

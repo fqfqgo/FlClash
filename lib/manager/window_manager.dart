@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_ext/window_ext.dart';
@@ -146,6 +147,12 @@ class _WindowHeaderState extends State<WindowHeader> {
   final isMaximizedNotifier = ValueNotifier<bool>(false);
   final isPinNotifier = ValueNotifier<bool>(false);
 
+  String get _windowTitle {
+    final rawVersion = globalState.appDisplayVersion;
+    final normalized = rawVersion.startsWith('v') ? rawVersion : 'v$rawVersion';
+    return '$appName-$normalized';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -252,9 +259,19 @@ class _WindowHeaderState extends State<WindowHeader> {
               ),
             ),
           ),
-          if (system.isMacOS)
-            const Text(appName)
-          else ...[
+          Positioned(
+            left: 12,
+            right: system.isMacOS ? 12 : 220,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _windowTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          if (!system.isMacOS) ...[
             Positioned(right: 0, child: _buildActions()),
           ],
         ],

@@ -1,111 +1,190 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/controller.dart';
+import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/config.dart';
+import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/widgets/list.dart';
 import 'package:fl_clash/widgets/scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-@immutable
-class Contributor {
-  final String avatar;
-  final String name;
-  final String link;
-
-  const Contributor({
-    required this.avatar,
-    required this.name,
-    required this.link,
-  });
-}
-
-class AboutView extends StatelessWidget {
+class AboutView extends ConsumerWidget {
   const AboutView({super.key});
 
-  Future<void> _checkUpdate(BuildContext context) async {
-    final data = await appController.safeRun<Map<String, dynamic>?>(
-      request.checkForUpdate,
-      title: appLocalizations.checkUpdate,
-    );
-    appController.checkUpdateResultHandle(data: data, isUser: true);
+  String _displayVersion() {
+    final raw = globalState.appDisplayVersion;
+    return raw.startsWith('v') ? raw : 'v$raw';
   }
 
-  List<Widget> _buildMoreSection(BuildContext context) {
-    return generateSection(
-      separated: false,
-      title: appLocalizations.more,
-      items: [
-        ListItem(
-          title: Text(appLocalizations.checkUpdate),
-          onTap: () {
-            _checkUpdate(context);
-          },
-        ),
-        ListItem(
-          title: const Text('Telegram'),
-          onTap: () {
-            globalState.openUrl('https://t.me/FlClash');
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-        ListItem(
-          title: Text(appLocalizations.project),
-          onTap: () {
-            globalState.openUrl('https://github.com/$repository');
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-        ListItem(
-          title: Text(appLocalizations.core),
-          onTap: () {
-            globalState.openUrl(
-              'https://github.com/chen08209/Clash.Meta/tree/FlClash',
-            );
-          },
-          trailing: const Icon(Icons.launch),
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _buildContributorsSection() {
-    const contributors = [
-      Contributor(
-        avatar: 'assets/images/avatar/june2.jpg',
-        name: 'June2',
-        link: 'https://t.me/Jibadong',
-      ),
-      Contributor(
-        avatar: 'assets/images/avatar/arue.jpg',
-        name: 'Arue',
-        link: 'https://t.me/xrcm6868',
-      ),
+  Future<String> _resolveVisibleBaseDir() async {
+    final env = Platform.environment;
+    final home = env['USERPROFILE'] ?? env['HOME'] ?? Directory.current.path;
+    final candidates = <String>[
+      if (system.isWindows && (env['OneDriveConsumer']?.isNotEmpty ?? false))
+        '${env['OneDriveConsumer']}${Platform.pathSeparator}Desktop',
+      if (system.isWindows && (env['OneDriveCommercial']?.isNotEmpty ?? false))
+        '${env['OneDriveCommercial']}${Platform.pathSeparator}Desktop',
+      if (system.isWindows && (env['OneDrive']?.isNotEmpty ?? false))
+        '${env['OneDrive']}${Platform.pathSeparator}Desktop',
+      '$home${Platform.pathSeparator}Desktop',
+      home,
     ];
-    return generateSection(
-      separated: false,
-      title: appLocalizations.otherContributors,
-      items: [
-        ListItem(
-          title: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Wrap(
-              spacing: 24,
-              children: [
-                for (final contributor in contributors)
-                  Avatar(contributor: contributor),
-              ],
-            ),
-          ),
-        ),
-      ],
+    for (final path in candidates) {
+      try {
+        final dir = Directory(path);
+        if (!dir.existsSync()) {
+          continue;
+        }
+        final probe = Directory(
+          '$path${Platform.pathSeparator}.flclash_write_probe',
+        );
+        if (!probe.existsSync()) {
+          await probe.create(recursive: true);
+        }
+        if (probe.existsSync()) {
+          await probe.delete(recursive: true);
+          return path;
+        }
+      } catch (_) {}
+    }
+    return home;
+  }
+
+  Future<String> _ensureBrowserUserDataDir() async {
+    final basePath = await _resolveVisibleBaseDir();
+    final folderName = system.isWindows ? 'flclash-edge' : 'flclash-chrome';
+    final dir = Directory('$basePath${Platform.pathSeparator}$folderName');
+    if (!dir.existsSync()) {
+      await dir.create(recursive: true);
+    }
+    final markerFile = File(
+      '${dir.path}${Platform.pathSeparator}flclash-profile.txt',
     );
+    if (!markerFile.existsSync()) {
+      await markerFile.writeAsString(
+        'This folder is used by FlClash browser launch profile.\n',
+      );
+    }
+    return dir.path;
+  }
+
+  Future<void> _ensureStarted(WidgetRef ref) async {
+    if (ref.read(isStartProvider)) {
+      return;
+    }
+    await appController.updateStatus(
+      true,
+      isInit: !ref.read(initProvider),
+    );
+    if (!ref.read(isStartProvider)) {
+      throw 'FlClash failed to start, please check profile and core status.';
+    }
+  }
+
+  Future<void> _launchWithProxy(int port, String userDataDir) async {
+    final proxyArg = '--proxy-server=http://127.0.0.1:$port';
+    final userDataArg = '--user-data-dir=$userDataDir';
+    const homeUrl = 'https://v2free.org/';
+    if (system.isWindows) {
+      final env = Platform.environment;
+      final localAppData = env['LOCALAPPDATA'] ?? '';
+      final candidates = <String>[
+        r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+        r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+        if (localAppData.isNotEmpty)
+          '$localAppData${Platform.pathSeparator}Microsoft${Platform.pathSeparator}Edge${Platform.pathSeparator}Application${Platform.pathSeparator}msedge.exe',
+      ];
+      for (final command in candidates) {
+        try {
+          await Process.start(command, [
+            '--new-window',
+            userDataArg,
+            proxyArg,
+            homeUrl,
+          ]);
+          return;
+        } catch (_) {}
+      }
+      await Process.start('cmd', [
+        '/c',
+        'start',
+        '',
+        'msedge',
+        '--new-window',
+        userDataArg,
+        proxyArg,
+        homeUrl,
+      ]);
+      return;
+    }
+    if (system.isMacOS) {
+      await Process.start('open', [
+        '-n',
+        '-a',
+        'Google Chrome',
+        '--args',
+        '--new-window',
+        userDataArg,
+        proxyArg,
+        homeUrl,
+      ]);
+      return;
+    }
+    if (system.isLinux) {
+      final commands = [
+        'google-chrome',
+        'google-chrome-stable',
+        'chromium-browser',
+        'chromium',
+      ];
+      for (final command in commands) {
+        try {
+          await Process.start(command, [
+            '--new-window',
+            userDataArg,
+            proxyArg,
+            homeUrl,
+          ]);
+          return;
+        } catch (_) {}
+      }
+      throw 'Chrome is not found on this Linux system.';
+    }
+  }
+
+  Future<void> _openV2free(WidgetRef ref) async {
+    final hasProfile = ref.read(
+      profilesProvider.select((state) => state.isNotEmpty),
+    );
+    if (system.isAndroid) {
+      // Android: no profile means no action.
+      if (!hasProfile) {
+        return;
+      }
+      if (!ref.read(isStartProvider)) {
+        await _ensureStarted(ref);
+      }
+      globalState.openUrl('https://v2free.org/');
+      return;
+    }
+    if (!hasProfile) {
+      throw 'No profile found. Please add a profile first.';
+    }
+    final port = ref.read(proxyStateProvider.select((state) => state.port));
+    final isStart = ref.read(isStartProvider);
+    if (!isStart) {
+      await _ensureStarted(ref);
+    }
+    final userDataDir = await _ensureBrowserUserDataDir();
+    await _launchWithProxy(port, userDataDir);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final items = [
       ListTile(
         title: Column(
@@ -134,7 +213,7 @@ class AboutView extends StatelessWidget {
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                           Text(
-                            globalState.packageInfo.version,
+                            _displayVersion(),
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ],
@@ -161,8 +240,19 @@ class AboutView extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
-      ..._buildContributorsSection(),
-      ..._buildMoreSection(context),
+      ListItem(
+        title: const Text('V2free'),
+        onTap: () async {
+          try {
+            await _openV2free(ref);
+          } catch (e) {
+            globalState.showNotifier(
+              '${appLocalizations.launchBrowserFailed}: $e',
+            );
+          }
+        },
+        trailing: const Icon(Icons.launch),
+      ),
     ];
     return BaseScaffold(
       title: appLocalizations.about,
@@ -170,34 +260,6 @@ class AboutView extends StatelessWidget {
         padding: kMaterialListPadding.copyWith(top: 16, bottom: 16),
         child: generateListView(items),
       ),
-    );
-  }
-}
-
-class Avatar extends StatelessWidget {
-  final Contributor contributor;
-
-  const Avatar({super.key, required this.contributor});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      child: Column(
-        children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: CircleAvatar(
-              foregroundImage: AssetImage(contributor.avatar),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(contributor.name, style: context.textTheme.bodySmall),
-        ],
-      ),
-      onTap: () {
-        globalState.openUrl(contributor.link);
-      },
     );
   }
 }

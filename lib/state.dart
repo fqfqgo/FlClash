@@ -33,6 +33,7 @@ class GlobalState {
   Timer? timer;
   bool isPre = true;
   late final String coreSHA256;
+  late final String appDisplayVersion;
   late final PackageInfo packageInfo;
   Function? updateCurrentDelayDebounce;
   late Measure measure;
@@ -83,6 +84,10 @@ class GlobalState {
     );
     final appStateOverrides = buildAppStateOverrides(appState);
     packageInfo = await PackageInfo.fromPlatform();
+    final definedVersion = const String.fromEnvironment('APP_VERSION');
+    appDisplayVersion = definedVersion.isNotEmpty
+        ? definedVersion
+        : packageInfo.version;
     final configMap = await preferences.getConfigMap();
     final config = await migration.migrationIfNeeded(
       configMap,

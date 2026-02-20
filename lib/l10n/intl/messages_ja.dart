@@ -210,7 +210,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "deleteMultipTip": m1,
     "deleteTip": m2,
     "desc": MessageLookupByLibrary.simpleMessage(
-      "ClashMetaベースのマルチプラットフォームプロキシクライアント。シンプルで使いやすく、オープンソースで広告なし。",
+      "マルチプラットフォームのプロキシクライアント。シンプルで使いやすい。",
     ),
     "destination": MessageLookupByLibrary.simpleMessage("宛先"),
     "destinationGeoIP": MessageLookupByLibrary.simpleMessage("宛先地理情報"),

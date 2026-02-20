@@ -117,6 +117,8 @@ jobs:
           flutter pub get
 
       - name: Setup
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
         run: dart setup.dart ${{ matrix.platform }} ${{ matrix.arch && format('--arch {0}', matrix.arch) }} ${{ env.IS_STABLE == 'true' && '--env stable' || '' }}
 
       - name: Ensure Android split APK artifacts
